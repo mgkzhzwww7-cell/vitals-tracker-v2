@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0F1B2A" />
+<title>Vitals Tracker</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<link rel="icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0;
+    background: #0F1B2A;
+    font-family: 'Inter', sans-serif;
+    color: #EDEDE4;
+    padding-bottom: 40px;
+    min-height: 100vh;
+  }
+  .display { font-family: 'Barlow Condensed', sans-serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  header {
+    background: #16324F;
+    border-bottom: 1px solid #24405f;
+    padding: 24px 20px 16px;
+  }
+  .eyebrow {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+    font-size: 10px; letter-spacing: 0.2em; color: #8FA4BC;
+  }
+  h1 { font-size: 30px; font-weight: 600; margin: 0; letter-spacing: 0.01em; }
+  #trace { margin-top: 8px; display: block; }
+  .subcaption { font-size: 11px; color: #6F87A3; margin: 4px 0 0; }
+
+  main { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+  .day-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+  .day-btn {
+    flex-shrink: 0; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    padding: 8px 12px; border-radius: 8px; background: #16324F; color: #8FA4BC;
+    border: 1px solid transparent; cursor: pointer;
+  }
+  .day-btn.active { background: #E8A33D; color: #0F1B2A; font-weight: 700; }
+  .day-btn.today:not(.active) { border-color: #E8A33D; }
+
+  .card { background: #16324F; border-radius: 16px; padding: 16px; }
+  .card-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .card-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+
+  .bp-inputs { display: flex; align-items: center; gap: 12px; }
+  .bp-inputs input {
+    font-family: 'JetBrains Mono', monospace; font-size: 24px; width: 80px;
+    background: transparent; border: none; border-bottom: 2px solid #24405f;
+    color: #EDEDE4; text-align: center; outline: none; padding-bottom: 4px;
+  }
+  .slash { font-size: 24px; color: #4C6E8C; }
+
+  .bar-track { height: 8px; border-radius: 999px; background: #0F1B2A; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; transition: width 0.2s; }
+  .card-value { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8FA4BC; }
+
+  .row-gap { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .quick-btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 6px 12px;
+    border-radius: 999px; background: #0F1B2A; border: 1px solid #24405f; cursor: pointer;
+  }
+  .text-input {
+    flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    background: #0F1B2A; border: none; border-radius: 6px; padding: 8px 10px;
+    color: #EDEDE4; outline: none;
+  }
+  .icon-btn {
+    border: none; border-radius: 6px; padding: 0 12px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .add-btn { background: #E8A33D; }
+  .clear-btn { background: #24405f; border-radius: 999px; padding: 0 10px; }
+
+  input[type="range"] { width: 100%; margin-top: 12px; accent-color: #B39DDB; }
+
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .toggle { width: 48px; height: 28px; border-radius: 999px; border: none; position: relative; cursor: pointer; }
+  .toggle-knob { width: 20px; height: 20px; border-radius: 999px; background: #EDEDE4; position: absolute; top: 4px; transition: left 0.15s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A33D" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    VITALS TRACKER
+  </div>
+  <h1 class="display">Blood Pressure</h1>
+  <svg id="trace" width="100%" height="44" viewBox="0 0 320 48" preserveAspectRatio="none">
+    <polyline id="trace-line" points="" fill="none" stroke="#E8A33D" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg>
+  <p class="subcaption">7-day consistency trend</p>
+</header>
+
+<main>
+  <div class="day-selector" id="day-selector"></div>
+
+  <div class="card">
+    <div class="card-row">
+      <span class="card-value" style="letter-spacing:0.05em;">READING (mmHg)</span>
+      <span class="badge" id="status-badge" style="display:none;"></span>
+    </div>
+    <div class="bp-inputs">
+      <input type="number" id="sys" placeholder="120" />
+      <span class="slash">/</span>
+      <input type="number" id="dia" placeholder="80" />
+    </div>
+  </div>
+
+  <div class="card" id="sodium-card">
+    <div class="card-row">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A33D" stroke-width="2"><path d="M3 2l1.5 1.5M18 2l-1.5 1.5M10 4v4M6 4v4M14 4v4"/><path d="M4 12h16l-1.5 8H5.5z"/></svg>
+        Sodium
+      </div>
+      <span class="card-value" id="sodium-value"></span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="sodium-bar" style="background:#E8A33D;"></div></div>
+    <div class="row-gap">
+      <input type="number" class="text-input" id="sodium-input" placeholder="Add mg" />
+      <button class="icon-btn add-btn" id="sodium-add">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F1B2A" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button class="icon-btn clear-btn" id="sodium-clear">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8FA4BC" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="card" id="water-card">
+    <div class="card-row">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5FA8D3" stroke-width="2"><path d="M12 2s7 8 7 13a7 7 0 0 1-14 0c0-5 7-13 7-13z"/></svg>
+        Water
+      </div>
+      <span class="card-value" id="water-value"></span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="water-bar" style="background:#5FA8D3;"></div></div>
+    <div class="row-gap" id="water-buttons"></div>
+  </div>
+
+  <div class="card" id="sleep-card">
+    <div class="card-row">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B39DDB" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Sleep
+      </div>
+      <span class="card-value" id="sleep-value"></span>
+    </div>
+    <div class="bar-track"><div class="bar-fill" id="sleep-bar" style="background:#B39DDB;"></div></div>
+    <input type="range" id="sleep-slider" min="0" max="10" step="0.5" />
+  </div>
+
+  <div class="card toggle-row">
+    <div class="card-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6FA98A" stroke-width="2"><path d="M6.5 6.5l11 11M4 9l3-3M17 20l3-3M2 12l2-2M20 4l2 2M9 4l1.5-1.5M20 15l-1.5 1.5"/></svg>
+      Workout done
+    </div>
+    <button class="toggle" id="workout-toggle">
+      <div class="toggle-knob" id="workout-knob"></div>
+    </button>
+  </div>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
