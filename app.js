@@ -10,22 +10,55 @@ function dayLabel(key) {
   const d = new Date(key + "T00:00:00");
   return d.toLocaleDateString(undefined, { weekday: "short" });
 }
-function last7Days() {
+function getWeekStart(offset = 0) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  const dow = d.getDay(); // 0 = Sunday
+  d.setDate(d.getDate() - dow + offset * 7);
+  return d;
+}
+function weekDates(offset = 0) {
+  const start = getWeekStart(offset);
   const arr = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
     arr.push(todayKey(d));
   }
   return arr;
 }
+function formatShort(key) {
+  const d = new Date(key + "T00:00:00");
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+function weekRangeLabel(offset) {
+  const dates = weekDates(offset);
+  const label = `${formatShort(dates[0])} – ${formatShort(dates[6])}`;
+  if (offset === 0) return `This week · ${label}`;
+  if (offset === -1) return `Last week · ${label}`;
+  return label;
+}
+function weekSummary(offset) {
+  const dates = weekDates(offset);
+  let sodiumDays = 0, waterDays = 0, sleepDays = 0, workouts = 0, readings = 0, count = 0;
+  dates.forEach((k) => {
+    const d = loadDay(k);
+    if (d.sodium || d.water || d.sleep || d.workout || d.sys || d.notes) count++;
+    if (d.sodium && d.sodium <= SODIUM_TARGET) sodiumDays++;
+    if (d.water >= WATER_TARGET_OZ) waterDays++;
+    if (d.sleep >= SLEEP_TARGET) sleepDays++;
+    if (d.workout) workouts++;
+    if (d.sys && d.dia) readings++;
+  });
+  return { sodiumDays, waterDays, sleepDays, workouts, readings, loggedDays: count };
+}
 function emptyDay() {
-  return { sodium: 0, water: 0, sleep: 0, workout: false, sys: "", dia: "" };
+  return { sodium: 0, water: 0, sleep: 0, workout: false, sys: "", dia: "", notes: "" };
 }
 function loadDay(key) {
   try {
     const raw = localStorage.getItem(STORAGE_PREFIX + key);
-    return raw ? JSON.parse(raw) : emptyDay();
+    return raw ? { ...emptyDay(), ...JSON.parse(raw) } : emptyDay();
   } catch {
     return emptyDay();
   }
@@ -51,11 +84,19 @@ function score(d) {
   return n ? s / n : 0.5;
 }
 
+let weekOffset = 0;
 let activeDay = todayKey();
-const week = last7Days();
 
 function render() {
+  const week = weekDates(weekOffset);
   const today = loadDay(activeDay);
+
+  // Week range label + summary
+  const summary = weekSummary(weekOffset);
+  document.getElementById("week-range").textContent =
+    `${weekRangeLabel(weekOffset)} · ${summary.workouts}/7 workouts · ${summary.readings} readings logged`;
+  document.getElementById("week-next").disabled = weekOffset >= 0;
+  document.getElementById("week-next").style.opacity = weekOffset >= 0 ? 0.4 : 1;
 
   // Day selector
   const sel = document.getElementById("day-selector");
@@ -63,7 +104,7 @@ function render() {
   week.forEach((k) => {
     const btn = document.createElement("button");
     btn.className = "day-btn" + (k === activeDay ? " active" : "") + (k === todayKey() ? " today" : "");
-    btn.textContent = dayLabel(k);
+    btn.textContent = dayLabel(k) + (loadDay(k).sys ? " •" : "");
     btn.onclick = () => { activeDay = k; render(); };
     sel.appendChild(btn);
   });
@@ -131,6 +172,12 @@ function render() {
   const toggle = document.getElementById("workout-toggle");
   toggle.style.background = today.workout ? "#6FA98A" : "#24405f";
   knob.style.left = today.workout ? "26px" : "4px";
+
+  // Notes
+  const notesEl = document.getElementById("notes");
+  if (document.activeElement !== notesEl) {
+    notesEl.value = today.notes || "";
+  }
 }
 
 // Event bindings
@@ -156,6 +203,21 @@ document.getElementById("sleep-slider").addEventListener("input", (e) => {
 });
 document.getElementById("workout-toggle").addEventListener("click", () => {
   const d = loadDay(activeDay); d.workout = !d.workout; saveDay(activeDay, d); render();
+});
+document.getElementById("notes").addEventListener("input", (e) => {
+  const d = loadDay(activeDay); d.notes = e.target.value; saveDay(activeDay, d);
+});
+document.getElementById("week-prev").addEventListener("click", () => {
+  weekOffset -= 1;
+  activeDay = weekDates(weekOffset)[0];
+  render();
+});
+document.getElementById("week-next").addEventListener("click", () => {
+  if (weekOffset >= 0) return;
+  weekOffset += 1;
+  const dates = weekDates(weekOffset);
+  activeDay = weekOffset === 0 ? todayKey() : dates[0];
+  render();
 });
 
 render();
