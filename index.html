@@ -182,6 +182,48 @@
   <div class="card">
     <div class="card-row">
       <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F0A868" stroke-width="2"><path d="M3 2v7c0 1.1.9 2 2 2h1v11M6 2v6M9 2v6M15 2v20M15 2c3 0 5 2 5 6s-2 6-5 6"/></svg>
+        Today's Meals
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+      <div>
+        <label style="font-size:11px; color:#8FA4BC; font-family:'JetBrains Mono',monospace;">BREAKFAST</label>
+        <input type="text" id="meal-breakfast" class="text-input" style="width:100%; margin-top:4px;" />
+        <a id="meal-breakfast-link" href="#" target="_blank" rel="noopener" style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; color:#E8A33D; text-decoration:none; margin-top:4px;"></a>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#8FA4BC; font-family:'JetBrains Mono',monospace;">LUNCH</label>
+        <input type="text" id="meal-lunch" class="text-input" style="width:100%; margin-top:4px;" />
+        <a id="meal-lunch-link" href="#" target="_blank" rel="noopener" style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; color:#E8A33D; text-decoration:none; margin-top:4px;"></a>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#8FA4BC; font-family:'JetBrains Mono',monospace;">SNACK</label>
+        <input type="text" id="meal-snack" class="text-input" style="width:100%; margin-top:4px;" />
+        <a id="meal-snack-link" href="#" target="_blank" rel="noopener" style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; color:#E8A33D; text-decoration:none; margin-top:4px;"></a>
+      </div>
+      <div>
+        <label style="font-size:11px; color:#8FA4BC; font-family:'JetBrains Mono',monospace;">DINNER</label>
+        <input type="text" id="meal-dinner" class="text-input" style="width:100%; margin-top:4px;" />
+        <a id="meal-dinner-link" href="#" target="_blank" rel="noopener" style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; color:#E8A33D; text-decoration:none; margin-top:4px;"></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-row" id="ideas-toggle" style="cursor:pointer;">
+      <div class="card-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6FA98A" stroke-width="2"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.3h6c0-1.1.4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg>
+        DASH Meal Ideas
+      </div>
+      <span class="card-value" id="ideas-caret">show</span>
+    </div>
+    <div id="ideas-body" style="display:none; margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-row">
+      <div class="card-title">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FA4BC" stroke-width="2"><path d="M4 4h16v12H7l-3 3z"/></svg>
         How did you feel today?
       </div>

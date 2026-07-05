@@ -1,4 +1,4 @@
-const CACHE_NAME = "vitals-tracker-v2";
+const CACHE_NAME = "vitals-tracker-v4";
 const ASSETS = [
   "./",
   "./index.html",

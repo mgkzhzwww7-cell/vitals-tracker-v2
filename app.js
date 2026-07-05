@@ -53,7 +53,7 @@ function weekSummary(offset) {
   return { sodiumDays, waterDays, sleepDays, workouts, readings, loggedDays: count };
 }
 function emptyDay() {
-  return { sodium: 0, water: 0, sleep: 0, workout: false, sys: "", dia: "", notes: "" };
+  return { sodium: 0, water: 0, sleep: 0, workout: false, sys: "", dia: "", notes: "", meals: { breakfast: "", lunch: "", snack: "", dinner: "" } };
 }
 function loadDay(key) {
   try {
@@ -82,6 +82,41 @@ function score(d) {
   if (d.sleep) { s += Math.min(1, d.sleep / SLEEP_TARGET); n++; }
   if (d.workout) { s += 1; n++; }
   return n ? s / n : 0.5;
+}
+
+const MEAL_IDEAS = {
+  breakfast: [
+    "Oats with walnuts, blueberries, ground flaxseed",
+    "Greek yogurt with sliced banana and chia seeds",
+    "Veggie omelet with spinach + whole wheat toast",
+    "Smoothie: spinach, berries, flaxseed, unsweetened almond milk",
+  ],
+  lunch: [
+    "Grilled salmon over spinach & quinoa salad, olive oil-lemon dressing",
+    "Grilled chicken, brown rice, roasted broccoli",
+    "Lentil soup with a side salad",
+    "Turkey & avocado wrap on whole wheat, side of carrots",
+  ],
+  snack: [
+    "Apple + handful of almonds",
+    "Carrot sticks with hummus",
+    "Handful of walnuts or pumpkin seeds",
+    "Low-fat Greek yogurt with berries",
+  ],
+  dinner: [
+    "Stir-fried veggies with tofu, brown rice",
+    "Baked cod, sweet potato, steamed green beans",
+    "Grilled lean beef, quinoa, roasted peppers",
+    "Chickpea & vegetable curry over brown rice",
+  ],
+};
+function ideaFor(mealType, dateKey) {
+  const d = new Date(dateKey + "T00:00:00");
+  const idx = d.getDay() % MEAL_IDEAS[mealType].length;
+  return MEAL_IDEAS[mealType][idx];
+}
+function youtubeSearchUrl(query) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(query + " recipe")}`;
 }
 
 let weekOffset = 0;
@@ -178,6 +213,21 @@ function render() {
   if (document.activeElement !== notesEl) {
     notesEl.value = today.notes || "";
   }
+
+  // Meals
+  ["breakfast", "lunch", "snack", "dinner"].forEach((meal) => {
+    const el = document.getElementById(`meal-${meal}`);
+    const idea = ideaFor(meal, activeDay);
+    el.placeholder = "e.g. " + idea;
+    if (document.activeElement !== el) {
+      el.value = (today.meals && today.meals[meal]) || "";
+    }
+    const link = document.getElementById(`meal-${meal}-link`);
+    if (link) {
+      link.href = youtubeSearchUrl(idea);
+      link.textContent = `▶ watch: ${idea}`;
+    }
+  });
 }
 
 // Event bindings
@@ -206,6 +256,38 @@ document.getElementById("workout-toggle").addEventListener("click", () => {
 });
 document.getElementById("notes").addEventListener("input", (e) => {
   const d = loadDay(activeDay); d.notes = e.target.value; saveDay(activeDay, d);
+});
+["breakfast", "lunch", "snack", "dinner"].forEach((meal) => {
+  document.getElementById(`meal-${meal}`).addEventListener("input", (e) => {
+    const d = loadDay(activeDay);
+    d.meals = d.meals || { breakfast: "", lunch: "", snack: "", dinner: "" };
+    d.meals[meal] = e.target.value;
+    saveDay(activeDay, d);
+  });
+});
+document.getElementById("ideas-toggle").addEventListener("click", () => {
+  const body = document.getElementById("ideas-body");
+  const caret = document.getElementById("ideas-caret");
+  const showing = body.style.display !== "none";
+  body.style.display = showing ? "none" : "block";
+  caret.textContent = showing ? "show" : "hide";
+  if (!showing && body.innerHTML === "") {
+    const order = ["breakfast", "lunch", "snack", "dinner"];
+    const labels = { breakfast: "Breakfast", lunch: "Lunch", snack: "Snack", dinner: "Dinner" };
+    body.innerHTML = order.map((m) => `
+      <div style="margin-bottom:12px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#8FA4BC; margin-bottom:4px;">${labels[m].toUpperCase()}</div>
+        <ul style="margin:0; padding-left:18px; font-size:13px; color:#EDEDE4; line-height:1.8;">
+          ${MEAL_IDEAS[m].map((idea) => `
+            <li>
+              ${idea}
+              <a href="${youtubeSearchUrl(idea)}" target="_blank" rel="noopener" style="color:#E8A33D; text-decoration:none; font-family:'JetBrains Mono',monospace; font-size:11px; margin-left:6px;">▶ watch</a>
+            </li>
+          `).join("")}
+        </ul>
+      </div>
+    `).join("");
+  }
 });
 document.getElementById("week-prev").addEventListener("click", () => {
   weekOffset -= 1;
